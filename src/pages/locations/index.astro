@@ -1,0 +1,117 @@
+---
+import { drizzle } from "drizzle-orm/d1";
+import Card from "../../components/Card.astro";
+import Pagination from "../../components/Pagination.astro";
+import SearchBox from "../../components/SearchBox.astro";
+
+import * as schema from "../../db/schema";
+import Layout from "../../layouts/Layout.astro";
+import { getAllLocations } from "../../lib/data";
+
+const { user } = Astro.locals;
+const db = drizzle(Astro.locals.runtime.env.DB, { schema });
+
+// Get page and search from query string
+const url = new URL(Astro.request.url);
+const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+const search = url.searchParams.get("q")?.trim() || undefined;
+
+const {
+    items: locations,
+    totalPages,
+    currentPage,
+    searchQuery,
+} = await getAllLocations(db, page, undefined, search);
+
+// Build base URL for pagination (preserve search query)
+const paginationBaseUrl = search
+    ? `/locations?q=${encodeURIComponent(search)}`
+    : "/locations";
+---
+
+<Layout title="Hunting Locations - California Ducks">
+    <main
+        class="mx-auto p-4 w-200 max-w-full text-neutral-200 text-xl leading-relaxed"
+    >
+        <h1
+            class="text-5xl md:text-6xl font-bold leading-tight text-center mb-8 font-serif"
+        >
+            Hunting <span
+                class="text-transparent bg-clip-text bg-linear-to-r from-amber-600 via-amber-500 to-neutral-200"
+                >Locations</span
+            >
+        </h1>
+
+        <div class="mb-6">
+            <SearchBox
+                placeholder="Search locations..."
+                value={searchQuery}
+                baseUrl="/locations"
+            />
+        </div>
+
+        {
+            searchQuery && (
+                <p class="text-sm text-neutral-400 mb-4">
+                    Showing results for "
+                    <span class="text-amber-500">{searchQuery}</span>"
+                </p>
+            )
+        }
+
+        {
+            locations.length === 0 ? (
+                <p class="text-center text-neutral-500 py-8">
+                    {searchQuery
+                        ? "No locations found matching your search."
+                        : "No locations yet. Be the first to add one!"}
+                </p>
+            ) : (
+                <ul
+                    role="list"
+                    class="grid grid-cols-1 md:grid-cols-2 gap-8 p-0"
+                >
+                    {locations.map((loc) => (
+                        <Card
+                            href={`/locations/${loc.slug}`}
+                            title={loc.name}
+                            body={loc.description}
+                        />
+                    ))}
+                </ul>
+            )
+        }
+
+        <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            baseUrl={paginationBaseUrl}
+        />
+
+        <div class="mt-12 text-center text-base text-neutral-400">
+            {
+                user ? (
+                    <div>
+                        <p>Don't see a location listed?</p>
+                        <a
+                            href="/locations/new"
+                            class="btn-primary inline-block mt-2"
+                        >
+                            Add Location
+                        </a>
+                    </div>
+                ) : (
+                    <p>
+                        <a
+                            href="/signin"
+                            class="text-amber-500 hover:text-amber-400 font-medium"
+                        >
+                            Sign in
+                        </a>{" "}
+                        to add a location.
+                    </p>
+                )
+            }
+        </div>
+    </main>
+</Layout>

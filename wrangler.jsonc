@@ -1,0 +1,30 @@
+{
+  "main": "dist/_worker.js/index.js",
+  "name": "caducks",
+  "compatibility_date": "2026-01-19",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist",
+  },
+  "routes": [
+    {
+      "pattern": "caducks.com",
+      "zone_name": "caducks.com",
+      "custom_domain": true,
+    },
+  ],
+  "vars": {
+    "BETTER_AUTH_URL": "https://caducks.com",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "caducks-db",
+      "database_id": "2bf5e782-a598-4f6f-bd3d-af6ec7c41a37",
+    },
+  ],
+  "observability": {
+    "enabled": true,
+  },
+}

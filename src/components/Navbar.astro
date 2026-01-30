@@ -1,0 +1,243 @@
+---
+import UserMenu from "./UserMenu";
+
+const navItems = [
+    { href: "/", label: "Home" },
+    { href: "/locations", label: "Locations" },
+    { href: "/forum", label: "Forum" },
+    { href: "/about", label: "About" },
+];
+
+const currentPath = Astro.url.pathname;
+const user = Astro.locals.user;
+---
+
+<nav
+    class="bg-neutral-900 border-b border-neutral-800 sticky top-0 z-50 shadow-md"
+>
+    <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 justify-between items-center">
+            <div class="flex items-center">
+                <a
+                    href="/"
+                    class="flex shrink-0 items-center gap-2 group no-underline"
+                >
+                    <!-- Duck Icon (SVG) -->
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-8 w-8 text-amber-600"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M12.5 2C12.5 2 12.8 5.4 9.5 7.5C6.2 9.6 2 8 2 8C2 8 4.5 13 8 13C11.5 13 13 11 13 11C13 11 13.5 14 11 16C8.5 18 6 17 6 17C6 17 9 22 15 21C21 20 22 14 22 12C22 10 20 10 20 10C20 10 21.5 6 17.5 4C13.5 2 12.5 2 12.5 2Z"
+                        ></path>
+                    </svg>
+                    <span
+                        class="text-2xl font-bold font-serif text-neutral-100 group-hover:text-amber-500 transition-colors"
+                    >
+                        CA<span class="text-amber-600">Ducks</span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- Desktop Menu -->
+            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                {
+                    navItems.map((item) => {
+                        const isActive =
+                            item.href === "/"
+                                ? currentPath === "/"
+                                : currentPath.startsWith(item.href);
+                        return (
+                            <a
+                                href={item.href}
+                                class={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors h-full no-underline ${
+                                    isActive
+                                        ? "border-amber-500 text-neutral-100"
+                                        : "border-transparent text-neutral-400 hover:border-neutral-600 hover:text-neutral-200"
+                                }`}
+                            >
+                                {item.label}
+                            </a>
+                        );
+                    })
+                }
+            </div>
+
+            <!-- Desktop User Menu -->
+            <div class="hidden sm:flex sm:items-center sm:ml-6">
+                <UserMenu client:load initialUser={user} />
+            </div>
+
+            <!-- Mobile menu button -->
+            <div class="flex items-center sm:hidden">
+                <button
+                    id="mobile-menu-btn"
+                    type="button"
+                    class="inline-flex items-center justify-center p-2 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-500"
+                    aria-controls="mobile-menu"
+                    aria-expanded="false"
+                >
+                    <span class="sr-only">Open main menu</span>
+                    <svg
+                        id="menu-icon-closed"
+                        class="block h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                        ></path>
+                    </svg>
+                    <svg
+                        id="menu-icon-open"
+                        class="hidden h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div
+        id="mobile-menu"
+        class="hidden sm:hidden bg-neutral-900 border-t-2 border-neutral-800"
+    >
+        <div class="space-y-1 px-2 pb-3 pt-2">
+            {
+                navItems.map((item) => {
+                    const isActive =
+                        item.href === "/"
+                            ? currentPath === "/"
+                            : currentPath.startsWith(item.href);
+                    return (
+                        <a
+                            href={item.href}
+                            class={`block rounded-md px-3 py-2 text-base font-medium no-underline ${
+                                isActive
+                                    ? "bg-neutral-800 text-white"
+                                    : "text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                            }`}
+                        >
+                            {item.label}
+                        </a>
+                    );
+                })
+            }
+        </div>
+        <!-- Mobile User Section -->
+        <div class="border-t border-neutral-800 pt-4 pb-3">
+            {
+                user ? (
+                    <div class="space-y-3">
+                        <div class="px-3 flex items-center gap-3">
+                            <div class="shrink-0">
+                                {user.image ? (
+                                    <img
+                                        class="h-9 w-9 rounded-full object-cover"
+                                        src={user.image}
+                                        alt=""
+                                    />
+                                ) : (
+                                    <div class="h-9 w-9 rounded-full bg-amber-900/50 border border-amber-700/50 flex items-center justify-center text-amber-400 font-bold">
+                                        {(user.displayName || user.name)
+                                            .charAt(0)
+                                            .toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <div class="text-base font-medium text-neutral-200">
+                                    {user.displayName || user.name}
+                                </div>
+                                <div class="text-sm font-medium text-neutral-500">
+                                    {user.email}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-1 px-2">
+                            <a
+                                href="/profile"
+                                class="block rounded-md px-3 py-2 text-base font-medium no-underline text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                            >
+                                Profile
+                            </a>
+                            <a
+                                href="#"
+                                id="mobile-signout-btn"
+                                class="block rounded-md px-3 py-2 text-base font-medium no-underline text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                            >
+                                Sign Out
+                            </a>
+                        </div>
+                    </div>
+                ) : (
+                    <div class="space-y-1 px-2">
+                        <a
+                            href="/signin"
+                            class="block rounded-md px-3 py-2 text-base font-medium no-underline text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                        >
+                            Sign In
+                        </a>
+                        <a
+                            href="/signup"
+                            class="block rounded-md px-3 py-2 text-base font-medium no-underline text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                        >
+                            Sign Up
+                        </a>
+                    </div>
+                )
+            }
+        </div>
+    </div>
+</nav>
+
+<script>
+    import { authClient } from "../lib/auth-client";
+
+    const btn = document.getElementById("mobile-menu-btn");
+    const menu = document.getElementById("mobile-menu");
+    const iconClosed = document.getElementById("menu-icon-closed");
+    const iconOpen = document.getElementById("menu-icon-open");
+
+    btn?.addEventListener("click", () => {
+        const isHidden = menu?.classList.contains("hidden");
+        if (isHidden) {
+            menu?.classList.remove("hidden");
+            iconClosed?.classList.add("hidden");
+            iconOpen?.classList.remove("hidden");
+            btn.setAttribute("aria-expanded", "true");
+        } else {
+            menu?.classList.add("hidden");
+            iconClosed?.classList.remove("hidden");
+            iconOpen?.classList.add("hidden");
+            btn.setAttribute("aria-expanded", "false");
+        }
+    });
+
+    const mobileSignoutBtn = document.getElementById("mobile-signout-btn");
+    mobileSignoutBtn?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const target = e.target as HTMLElement;
+        target.textContent = "Signing out...";
+        await authClient.signOut();
+        window.location.href = "/";
+    });
+</script>

@@ -1,0 +1,36 @@
+---
+import Card from "../components/Card.astro";
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="California Ducks - Hunting Community & Locations">
+    <main
+        class="mx-auto p-4 w-200 max-w-full text-neutral-200 text-xl leading-relaxed"
+    >
+        <h1
+            class="text-5xl md:text-6xl font-bold leading-tight text-center mb-8 font-serif tracking-tight"
+        >
+            Welcome to <span
+                class="text-transparent bg-clip-text bg-linear-to-r from-amber-600 via-amber-500 to-neutral-200"
+                >California Ducks</span
+            >
+        </h1>
+        <ul role="list" class="grid grid-cols-1 md:grid-cols-2 gap-8 p-0">
+            <Card
+                href="/forum"
+                title="Community Forum"
+                body="Join the discussion about waterfowl hunting seasons, gear, and tips."
+            />
+            <Card
+                href="/locations"
+                title="Hunting Locations"
+                body="Explore our wiki of public and private hunting locations across California."
+            />
+            <Card
+                href="/about"
+                title="About Us"
+                body="Learn more about the project and how to claim ownership of location pages."
+            />
+        </ul>
+    </main>
+</Layout>

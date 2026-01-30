@@ -1,0 +1,243 @@
+---
+import Layout from "../layouts/Layout.astro";
+---
+
+<Layout title="Sign In - California Ducks">
+    <main
+        class="flex min-h-[calc(100vh-4rem)] items-start md:items-center justify-center p-4"
+    >
+        <div
+            class="w-full max-w-md bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl p-8"
+        >
+            <h1
+                class="text-3xl font-bold text-center mb-2 font-serif text-neutral-100"
+            >
+                Welcome Back
+            </h1>
+            <p class="text-neutral-500 text-center mb-8">
+                Sign in to your account
+            </p>
+
+            <form id="signin-form" class="space-y-5">
+                <div>
+                    <label for="email" class="form-label">Email address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        class="input-field"
+                        placeholder="you@example.com"
+                    />
+                </div>
+                <div>
+                    <label for="password" class="form-label">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        class="input-field"
+                        placeholder="••••••••"
+                    />
+                </div>
+
+                <div class="flex items-center justify-between text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            class="rounded bg-neutral-900 border-neutral-700 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span class="text-neutral-400">Remember me</span>
+                    </label>
+                    <a
+                        href="/forgot-password"
+                        class="text-amber-500 hover:text-amber-400 transition-colors"
+                        >Forgot password?</a
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    id="submit-btn"
+                    class="w-full btn-primary py-2.5 px-4"
+                >
+                    Sign In
+                </button>
+            </form>
+
+            <!-- 2FA Verification Form (hidden by default) -->
+            <form id="twofa-form" class="space-y-5 hidden">
+                <div class="text-center mb-4">
+                    <div
+                        class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-900/50 border border-amber-700/50 mb-3"
+                    >
+                        <svg
+                            class="w-6 h-6 text-amber-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            ></path>
+                        </svg>
+                    </div>
+                    <p class="text-neutral-400 text-sm">
+                        Enter the 6-digit code from your authenticator app
+                    </p>
+                </div>
+                <div>
+                    <input
+                        type="text"
+                        id="totp-code"
+                        name="totp-code"
+                        required
+                        maxlength="6"
+                        class="input-field text-center text-2xl tracking-widest font-mono py-3"
+                        placeholder="000000"
+                    />
+                </div>
+
+                <button
+                    type="submit"
+                    id="twofa-submit-btn"
+                    class="w-full btn-primary py-2.5 px-4"
+                >
+                    Verify
+                </button>
+
+                <button
+                    type="button"
+                    id="twofa-cancel-btn"
+                    class="w-full btn-secondary py-2.5 px-4"
+                >
+                    Cancel
+                </button>
+            </form>
+
+            <p
+                id="signup-link"
+                class="mt-8 text-center text-sm text-neutral-500"
+            >
+                Don't have an account?
+                <a
+                    href="/signup"
+                    class="text-amber-500 hover:text-amber-400 font-medium transition-colors"
+                    >Sign up</a
+                >
+            </p>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    import { authClient } from "../lib/auth-client";
+
+    const signinForm = document.getElementById(
+        "signin-form",
+    ) as HTMLFormElement;
+    const twofaForm = document.getElementById("twofa-form") as HTMLFormElement;
+    const submitBtn = document.getElementById(
+        "submit-btn",
+    ) as HTMLButtonElement;
+    const twofaSubmitBtn = document.getElementById(
+        "twofa-submit-btn",
+    ) as HTMLButtonElement;
+    const twofaCancelBtn = document.getElementById(
+        "twofa-cancel-btn",
+    ) as HTMLButtonElement;
+    const signupLink = document.getElementById("signup-link") as HTMLElement;
+
+    function showTwoFaForm() {
+        signinForm.classList.add("hidden");
+        twofaForm.classList.remove("hidden");
+        signupLink.classList.add("hidden");
+        (document.getElementById("totp-code") as HTMLInputElement).focus();
+    }
+
+    function showSigninForm() {
+        signinForm.classList.remove("hidden");
+        twofaForm.classList.add("hidden");
+        signupLink.classList.remove("hidden");
+        (document.getElementById("totp-code") as HTMLInputElement).value = "";
+    }
+
+    signinForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = (document.getElementById("email") as HTMLInputElement)
+            .value;
+        const password = (
+            document.getElementById("password") as HTMLInputElement
+        ).value;
+
+        try {
+            submitBtn.textContent = "Signing in...";
+            submitBtn.disabled = true;
+
+            const { data, error } = await authClient.signIn.email({
+                email,
+                password,
+            });
+
+            if (error) {
+                alert(error.message);
+                submitBtn.textContent = "Sign In";
+                submitBtn.disabled = false;
+                return;
+            }
+
+            // Check if 2FA is required
+            if ((data as { twoFactorRedirect?: boolean })?.twoFactorRedirect) {
+                submitBtn.textContent = "Sign In";
+                submitBtn.disabled = false;
+                showTwoFaForm();
+                return;
+            }
+
+            // Redirect on success
+            window.location.href = "/";
+        } catch (err) {
+            console.error(err);
+            submitBtn.textContent = "Sign In";
+            submitBtn.disabled = false;
+        }
+    });
+
+    twofaForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const code = (document.getElementById("totp-code") as HTMLInputElement)
+            .value;
+
+        try {
+            twofaSubmitBtn.textContent = "Verifying...";
+            twofaSubmitBtn.disabled = true;
+
+            const { error } = await authClient.twoFactor.verifyTotp({
+                code,
+            });
+
+            if (error) {
+                alert(error.message || "Invalid code");
+                twofaSubmitBtn.textContent = "Verify";
+                twofaSubmitBtn.disabled = false;
+                return;
+            }
+
+            // Redirect on success
+            window.location.href = "/";
+        } catch (err) {
+            console.error(err);
+            twofaSubmitBtn.textContent = "Verify";
+            twofaSubmitBtn.disabled = false;
+        }
+    });
+
+    twofaCancelBtn?.addEventListener("click", () => {
+        showSigninForm();
+    });
+</script>

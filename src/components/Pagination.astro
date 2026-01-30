@@ -1,0 +1,116 @@
+---
+interface Props {
+  currentPage: number;
+  totalPages: number;
+  baseUrl: string;
+}
+
+const { currentPage, totalPages, baseUrl } = Astro.props;
+
+// Don't render if only 1 page
+if (totalPages <= 1) {
+  return null;
+}
+
+// Generate page numbers to show
+const getPageNumbers = () => {
+  const pages: (number | "...")[] = [];
+  const showEllipsisStart = currentPage > 3;
+  const showEllipsisEnd = currentPage < totalPages - 2;
+
+  if (totalPages <= 7) {
+    // Show all pages if 7 or fewer
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(i);
+    }
+  } else {
+    // Always show first page
+    pages.push(1);
+
+    if (showEllipsisStart) {
+      pages.push("...");
+    }
+
+    // Show pages around current
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+
+    for (let i = start; i <= end; i++) {
+      if (i !== 1 && i !== totalPages) {
+        pages.push(i);
+      }
+    }
+
+    if (showEllipsisEnd) {
+      pages.push("...");
+    }
+
+    // Always show last page
+    pages.push(totalPages);
+  }
+
+  return pages;
+};
+
+const pageNumbers = getPageNumbers();
+
+const getPageUrl = (page: number) => {
+  if (page === 1) {
+    return baseUrl;
+  }
+  const separator = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${separator}page=${page}`;
+};
+---
+
+{totalPages > 1 && (
+  <nav class="flex items-center justify-center gap-1 mt-8" aria-label="Pagination">
+    {/* Previous button */}
+    {currentPage > 1 ? (
+      <a
+        href={getPageUrl(currentPage - 1)}
+        class="px-3 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+        aria-label="Previous page"
+      >
+        &larr;
+      </a>
+    ) : (
+      <span class="px-3 py-2 rounded-lg bg-neutral-900 text-neutral-600 cursor-not-allowed">
+        &larr;
+      </span>
+    )}
+
+    {/* Page numbers */}
+    {pageNumbers.map((page) =>
+      page === "..." ? (
+        <span class="px-3 py-2 text-neutral-500">...</span>
+      ) : page === currentPage ? (
+        <span class="px-3 py-2 rounded-lg bg-amber-700 text-white font-bold">
+          {page}
+        </span>
+      ) : (
+        <a
+          href={getPageUrl(page)}
+          class="px-3 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+        >
+          {page}
+        </a>
+      )
+    )}
+
+    {/* Next button */}
+    {currentPage < totalPages ? (
+      <a
+        href={getPageUrl(currentPage + 1)}
+        class="px-3 py-2 rounded-lg bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white transition-colors"
+        aria-label="Next page"
+      >
+        &rarr;
+      </a>
+    ) : (
+      <span class="px-3 py-2 rounded-lg bg-neutral-900 text-neutral-600 cursor-not-allowed">
+        &rarr;
+      </span>
+    )}
+  </nav>
+)}

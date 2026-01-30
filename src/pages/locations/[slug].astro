@@ -1,0 +1,211 @@
+---
+import { and, eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { marked } from "marked";
+import LocationMap from "../../components/LocationMap";
+import VoteComponent from "../../components/VoteComponent";
+import * as schema from "../../db/schema";
+import Layout from "../../layouts/Layout.astro";
+import { getLocationBySlug } from "../../lib/data";
+
+const {
+    user,
+    runtime: { env },
+} = Astro.locals;
+const { slug } = Astro.params;
+
+if (!slug) {
+    return Astro.redirect("/404");
+}
+
+const db = drizzle(env.DB, { schema });
+const location = await getLocationBySlug(db, slug);
+
+if (!location) {
+    return Astro.redirect("/404");
+}
+
+// Get user's vote for this location
+let userVote = 0;
+if (user) {
+    const voteResult = await db
+        .select({ value: schema.location_votes.value })
+        .from(schema.location_votes)
+        .where(
+            and(
+                eq(schema.location_votes.userId, user.id),
+                eq(schema.location_votes.locationId, location.id),
+            ),
+        )
+        .limit(1);
+    userVote = voteResult[0]?.value ?? 0;
+}
+
+const content = marked.parse(location.content);
+---
+
+<Layout title={`${location.name} - California Ducks`}>
+    <main class="mx-auto p-4 w-200 max-w-full text-neutral-200">
+        <div class="mb-12 border-b border-neutral-800 pb-8">
+            <a
+                href="/locations"
+                class="text-amber-500 hover:text-amber-400 mb-4 inline-flex items-center transition-colors"
+            >
+                <span class="mr-2">&larr;</span> Back to Locations
+            </a>
+            <h1
+                class="text-4xl md:text-5xl font-bold leading-tight mb-2 font-serif text-neutral-100"
+            >
+                {location.name}
+            </h1>
+            <p class="text-xl text-neutral-400 mb-6 font-serif">
+                {location.description}
+            </p>
+
+            <div
+                class="bg-neutral-900 border border-neutral-800 rounded-xl p-6 shadow-md"
+            >
+                <div
+                    class="flex flex-col md:flex-row md:items-start justify-between gap-6"
+                >
+                    {/* Contact Info & Status */}
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-6">
+                            <VoteComponent
+                                client:load
+                                locationId={location.id}
+                                initialCount={location.verified_count}
+                                initialUserVote={userVote}
+                                isLoggedIn={!!user}
+                            />
+                        </div>
+
+                        {/* Contact Info Grid */}
+                        <div class="grid grid-cols-1 gap-3 text-sm">
+                            {
+                                location.contact_phone && (
+                                    <div class="flex items-center text-neutral-300">
+                                        <span class="w-20 text-neutral-500 font-medium">
+                                            Phone:
+                                        </span>
+                                        <a
+                                            href={`tel:${location.contact_phone}`}
+                                            class="hover:text-amber-500 transition-colors"
+                                        >
+                                            {location.contact_phone}
+                                        </a>
+                                    </div>
+                                )
+                            }
+                            {
+                                location.contact_email && (
+                                    <div class="flex items-center text-neutral-300">
+                                        <span class="w-20 text-neutral-500 font-medium">
+                                            Email:
+                                        </span>
+                                        <a
+                                            href={`mailto:${location.contact_email}`}
+                                            class="hover:text-amber-500 transition-colors"
+                                        >
+                                            {location.contact_email}
+                                        </a>
+                                    </div>
+                                )
+                            }
+                            {
+                                location.contact_website && (
+                                    <div class="flex items-center text-neutral-300">
+                                        <span class="w-20 text-neutral-500 font-medium">
+                                            Website:
+                                        </span>
+                                        <a
+                                            href={location.contact_website}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="hover:text-amber-500 transition-colors truncate max-w-62"
+                                        >
+                                            {location.contact_website}
+                                        </a>
+                                    </div>
+                                )
+                            }
+                            {
+                                !location.contact_phone &&
+                                    !location.contact_email &&
+                                    !location.contact_website && (
+                                        <p class="text-sm text-neutral-500 italic">
+                                            No contact information available.
+                                        </p>
+                                    )
+                            }
+                        </div>
+
+                        {/* Map */}
+                        {
+                            location.latitude !== null &&
+                                location.longitude !== null && (
+                                    <div class="mt-4">
+                                        <p class="text-sm text-neutral-500 font-medium mb-2">
+                                            Location
+                                        </p>
+                                        <LocationMap
+                                            client:only="react"
+                                            latitude={location.latitude}
+                                            longitude={location.longitude}
+                                            name={location.name}
+                                        />
+                                    </div>
+                                )
+                        }
+                    </div>
+
+                    {/* Actions */}
+                    <div
+                        class="flex flex-col items-start md:items-end gap-3 min-w-50 border-t md:border-t-0 md:border-l border-neutral-800 pt-4 md:pt-0 md:pl-6 w-full md:w-auto mt-4 md:mt-0"
+                    >
+                        {
+                            user && user.id === location.userId && (
+                                <div class="w-full md:text-right">
+                                    <p class="text-sm text-neutral-500 mb-2">
+                                        You created this location.
+                                    </p>
+                                    <a
+                                        href={`/locations/${location.slug}/edit`}
+                                        class="btn-primary inline-block w-full md:w-auto text-center text-sm py-2 px-4"
+                                    >
+                                        Edit Location
+                                    </a>
+                                </div>
+                            )
+                        }
+                        {
+                            user && user.id !== location.userId && (
+                                <div class="w-full md:text-right">
+                                    <p class="text-sm text-neutral-500 mb-2">
+                                        Have updated info?
+                                    </p>
+                                    <a
+                                        href={`mailto:admin@caducks.com?subject=Update Request: ${location.name}&body=I have updated contact info for ${location.name}.`}
+                                        class="btn-secondary inline-block w-full md:w-auto text-center text-sm py-2 px-4"
+                                    >
+                                        Suggest Edit
+                                    </a>
+                                </div>
+                            )
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <section class="section-container">
+            <h2 class="text-2xl font-bold mb-2 text-neutral-100 font-serif">
+                Location Details
+            </h2>
+            <div
+                class="prose prose-neutral prose-invert max-w-none text-neutral-300 leading-relaxed"
+                set:html={content}
+            />
+        </section>
+    </main>
+</Layout>

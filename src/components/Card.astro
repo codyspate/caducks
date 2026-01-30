@@ -1,0 +1,28 @@
+---
+interface Props {
+    title: string;
+    body: string | null;
+    href: string;
+}
+
+const { href, title, body } = Astro.props;
+---
+
+<li
+    class="group list-none flex p-px bg-neutral-900 rounded-lg transition-all duration-500 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] hover:bg-linear-to-br hover:from-amber-700 hover:to-amber-600 focus-within:bg-linear-to-br focus-within:from-amber-700 focus-within:to-amber-600"
+>
+    <a
+        href={href}
+        class="w-full no-underline leading-relaxed p-6 rounded-lg text-neutral-300 bg-neutral-900 opacity-90 hover:opacity-100 transition-opacity"
+    >
+        <h2
+            class="m-0 text-xl font-bold transition-colors duration-300 group-hover:text-amber-400 font-serif"
+        >
+            {title}
+            <span>&rarr;</span>
+        </h2>
+        <p class="mt-2 text-neutral-400">
+            {body ?? "No description available"}
+        </p>
+    </a>
+</li>

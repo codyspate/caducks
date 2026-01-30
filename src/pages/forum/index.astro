@@ -1,0 +1,108 @@
+---
+import { drizzle } from "drizzle-orm/d1";
+import Pagination from "../../components/Pagination.astro";
+import SearchBox from "../../components/SearchBox.astro";
+import * as schema from "../../db/schema";
+import Layout from "../../layouts/Layout.astro";
+import { getAllTopics } from "../../lib/data";
+
+const db = drizzle(Astro.locals.runtime.env.DB, { schema });
+
+// Get page and search from query string
+const url = new URL(Astro.request.url);
+const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+const search = url.searchParams.get("q")?.trim() || undefined;
+
+const {
+    items: topics,
+    totalPages,
+    currentPage,
+    searchQuery,
+} = await getAllTopics(db, page, undefined, search);
+
+// Build base URL for pagination (preserve search query)
+const paginationBaseUrl = search
+    ? `/forum?q=${encodeURIComponent(search)}`
+    : "/forum";
+---
+
+<Layout title="Community Forum - California Ducks">
+    <main class="mx-auto p-4 w-200 max-w-full text-neutral-200">
+        <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
+            <h1 class="text-5xl font-bold leading-tight m-0 font-serif">
+                Community <span
+                    class="text-transparent bg-clip-text bg-linear-to-r from-amber-600 via-amber-500 to-neutral-200"
+                    >Forum</span
+                >
+            </h1>
+            <a href="/forum/new" class="btn-primary"> Start Discussion </a>
+        </div>
+
+        <p class="text-xl text-neutral-400 mb-6 leading-relaxed">
+            Join the conversation with fellow hunters. Share tips, reports,
+            classifieds, and more.
+        </p>
+
+        <div class="mb-6">
+            <SearchBox
+                placeholder="Search discussions..."
+                value={searchQuery}
+                baseUrl="/forum"
+            />
+        </div>
+
+        {
+            searchQuery && (
+                <p class="text-sm text-neutral-400 mb-4">
+                    Showing results for "
+                    <span class="text-amber-500">{searchQuery}</span>"
+                </p>
+            )
+        }
+
+        <div class="flex flex-col gap-4">
+            {
+                topics.length === 0 ? (
+                    <p class="text-center text-neutral-500 py-8">
+                        {searchQuery
+                            ? "No discussions found matching your search."
+                            : "No discussions yet. Be the first to start one!"}
+                    </p>
+                ) : (
+                    topics.map((topic) => (
+                        <div class="bg-neutral-900 rounded-lg border border-neutral-800 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:border-amber-500/30 group">
+                            <a
+                                href={`/forum/${topic.slug}`}
+                                class="flex justify-between items-center p-6 no-underline text-inherit"
+                            >
+                                <div class="flex-1 pr-4">
+                                    <h3 class="m-0 mb-2 text-xl font-bold text-neutral-200 group-hover:text-amber-500 transition-colors font-serif">
+                                        {topic.title}
+                                    </h3>
+                                    <span class="text-sm text-neutral-500">
+                                        Started by {topic.author} •{" "}
+                                        {topic.lastActive}
+                                    </span>
+                                </div>
+                                <div class="flex flex-col items-center min-w-20 pl-6 border-l border-neutral-800">
+                                    <span class="text-2xl font-bold text-amber-500">
+                                        {topic.replies}
+                                    </span>
+                                    <span class="text-xs text-neutral-500 uppercase font-medium tracking-wide">
+                                        replies
+                                    </span>
+                                </div>
+                            </a>
+                        </div>
+                    ))
+                )
+            }
+        </div>
+
+        <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            baseUrl={paginationBaseUrl}
+        />
+    </main>
+</Layout>
