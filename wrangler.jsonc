@@ -5,26 +5,26 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "binding": "ASSETS",
-    "directory": "./dist",
+    "directory": "./dist"
   },
   "routes": [
     {
       "pattern": "caducks.com",
       "zone_name": "caducks.com",
-      "custom_domain": true,
-    },
+      "custom_domain": true
+    }
   ],
   "vars": {
-    "BETTER_AUTH_URL": "https://caducks.com",
+    "BETTER_AUTH_URL": "https://caducks.com"
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "caducks-db",
-      "database_id": "2bf5e782-a598-4f6f-bd3d-af6ec7c41a37",
-    },
+      "database_id": "2bf5e782-a598-4f6f-bd3d-af6ec7c41a37"
+    }
   ],
   "observability": {
-    "enabled": true,
-  },
+    "enabled": true
+  }
 }

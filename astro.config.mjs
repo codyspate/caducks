@@ -7,13 +7,13 @@ import { defineConfig } from "astro/config";
 
 // https://astro.build/config
 export default defineConfig({
-	output: "server",
-	adapter: cloudflare({
-		imageService: "compile",
-	}),
-	integrations: [react()],
+  output: "server",
+  adapter: cloudflare({
+    imageService: "compile",
+  }),
+  integrations: [react()],
 
-	vite: {
-		plugins: [tailwindcss()],
-	},
+  vite: {
+    plugins: [tailwindcss()],
+  },
 });

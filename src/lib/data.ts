@@ -77,10 +77,15 @@ export async function getAllLocations(
 export async function getLocationBySlug(
   db: DrizzleD1Database<typeof schema>,
   slug: string,
-): Promise<Location | undefined> {
+): Promise<(Location & { lastUpdatedByName?: string | null }) | undefined> {
   const result = await db
-    .select()
+    .select({
+      location: locations,
+      lastUpdatedByName: user.displayName,
+      lastUpdatedByUserName: user.name,
+    })
     .from(locations)
+    .leftJoin(user, eq(locations.lastUpdatedByUserId, user.id))
     .where(
       and(
         eq(locations.slug, slug),
@@ -90,13 +95,14 @@ export async function getLocationBySlug(
     .limit(1);
   if (!result[0]) return undefined;
 
-  const location = result[0];
+  const { location, lastUpdatedByName, lastUpdatedByUserName } = result[0];
   return {
     ...location,
     contact_phone: location.contact_phone ?? null,
     contact_email: location.contact_email ?? null,
     contact_website: location.contact_website ?? null,
     description: location.description ?? "",
+    lastUpdatedByName: lastUpdatedByName || lastUpdatedByUserName || null,
   };
 }
 
@@ -350,4 +356,36 @@ export async function getUserVotesForTopic(
   }
 
   return votes;
+}
+
+export async function getUserLocationVote(
+  db: DrizzleD1Database<typeof schema>,
+  userId: string,
+  locationId: string,
+): Promise<number> {
+  const result = await db
+    .select({ value: schema.location_votes.value })
+    .from(schema.location_votes)
+    .where(
+      and(
+        eq(schema.location_votes.userId, userId),
+        eq(schema.location_votes.locationId, locationId),
+      ),
+    )
+    .limit(1);
+
+  return result[0]?.value ?? 0;
+}
+
+export async function getForumPostById(
+  db: DrizzleD1Database<typeof schema>,
+  postId: string,
+) {
+  const result = await db
+    .select()
+    .from(forum_posts)
+    .where(eq(forum_posts.id, postId))
+    .limit(1);
+
+  return result[0];
 }

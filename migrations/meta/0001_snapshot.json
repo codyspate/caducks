@@ -105,12 +105,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -179,12 +175,8 @@
           "name": "forum_post_user_id_user_id_fk",
           "tableFrom": "forum_post",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -192,12 +184,8 @@
           "name": "forum_post_topic_id_forum_topic_id_fk",
           "tableFrom": "forum_post",
           "tableTo": "forum_topic",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -270,9 +258,7 @@
       "indexes": {
         "forum_topic_slug_unique": {
           "name": "forum_topic_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -281,12 +267,8 @@
           "name": "forum_topic_user_id_user_id_fk",
           "tableFrom": "forum_topic",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -344,18 +326,12 @@
       "indexes": {
         "forum_vote_user_topic_idx": {
           "name": "forum_vote_user_topic_idx",
-          "columns": [
-            "user_id",
-            "topic_id"
-          ],
+          "columns": ["user_id", "topic_id"],
           "isUnique": true
         },
         "forum_vote_user_post_idx": {
           "name": "forum_vote_user_post_idx",
-          "columns": [
-            "user_id",
-            "post_id"
-          ],
+          "columns": ["user_id", "post_id"],
           "isUnique": true
         }
       },
@@ -364,12 +340,8 @@
           "name": "forum_vote_user_id_user_id_fk",
           "tableFrom": "forum_vote",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -377,12 +349,8 @@
           "name": "forum_vote_topic_id_forum_topic_id_fk",
           "tableFrom": "forum_vote",
           "tableTo": "forum_topic",
-          "columnsFrom": [
-            "topic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["topic_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -390,12 +358,8 @@
           "name": "forum_vote_post_id_forum_post_id_fk",
           "tableFrom": "forum_vote",
           "tableTo": "forum_post",
-          "columnsFrom": [
-            "post_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["post_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -456,12 +420,8 @@
           "name": "location_edit_location_id_location_id_fk",
           "tableFrom": "location_edit",
           "tableTo": "location",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -469,12 +429,8 @@
           "name": "location_edit_user_id_user_id_fk",
           "tableFrom": "location_edit",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -525,10 +481,7 @@
       "indexes": {
         "location_vote_user_location_idx": {
           "name": "location_vote_user_location_idx",
-          "columns": [
-            "user_id",
-            "location_id"
-          ],
+          "columns": ["user_id", "location_id"],
           "isUnique": true
         }
       },
@@ -537,12 +490,8 @@
           "name": "location_vote_user_id_user_id_fk",
           "tableFrom": "location_vote",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -550,12 +499,8 @@
           "name": "location_vote_location_id_location_id_fk",
           "tableFrom": "location_vote",
           "tableTo": "location",
-          "columnsFrom": [
-            "location_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["location_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -670,9 +615,7 @@
       "indexes": {
         "location_slug_unique": {
           "name": "location_slug_unique",
-          "columns": [
-            "slug"
-          ],
+          "columns": ["slug"],
           "isUnique": true
         }
       },
@@ -681,12 +624,8 @@
           "name": "location_user_id_user_id_fk",
           "tableFrom": "location",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -782,12 +721,8 @@
           "name": "passkey_user_id_user_id_fk",
           "tableFrom": "passkey",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -859,9 +794,7 @@
       "indexes": {
         "session_token_unique": {
           "name": "session_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         }
       },
@@ -870,12 +803,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -922,12 +851,8 @@
           "name": "two_factor_user_id_user_id_fk",
           "tableFrom": "two_factor",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1006,9 +931,7 @@
       "indexes": {
         "user_email_unique": {
           "name": "user_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },

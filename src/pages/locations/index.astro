@@ -17,16 +17,16 @@ const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
 const search = url.searchParams.get("q")?.trim() || undefined;
 
 const {
-    items: locations,
-    totalPages,
-    currentPage,
-    searchQuery,
+  items: locations,
+  totalPages,
+  currentPage,
+  searchQuery,
 } = await getAllLocations(db, page, undefined, search);
 
 // Build base URL for pagination (preserve search query)
 const paginationBaseUrl = search
-    ? `/locations?q=${encodeURIComponent(search)}`
-    : "/locations";
+  ? `/locations?q=${encodeURIComponent(search)}`
+  : "/locations";
 ---
 
 <Layout title="Hunting Locations - California Ducks">

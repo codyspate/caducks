@@ -1,0 +1,1 @@
+ALTER TABLE `location` ADD `last_updated_by_user_id` text REFERENCES user(id);

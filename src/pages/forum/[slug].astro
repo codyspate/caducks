@@ -1,4 +1,5 @@
 ---
+import { actions } from "astro:actions";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { nanoid } from "nanoid";
@@ -21,41 +22,13 @@ const db = drizzle(env.DB, { schema });
 
 // Handle POST for new replies
 if (Astro.request.method === "POST" && user) {
-    try {
-        const formData = await Astro.request.formData();
-        const content = formData.get("content") as string;
-
-        if (!content) {
-            throw new Error("Content is required.");
-        }
-
-        // Get topic to get its ID
-        const topic = await getTopicBySlug(db, slug);
-        if (!topic?.id) {
-            return Astro.redirect("/404");
-        }
-
-        const now = new Date();
-
-        await db.insert(schema.forum_posts).values({
-            id: nanoid(),
-            content,
-            userId: user.id,
-            topicId: topic.id,
-            voteCount: 0,
-            createdAt: now,
-            updatedAt: now,
-        });
-
-        // Update topic's updatedAt to bump it in the list
-        await db
-            .update(schema.forum_topics)
-            .set({ updatedAt: now })
-            .where(eq(schema.forum_topics.id, topic.id));
-
+    const formData = await Astro.request.formData();
+    const result = await Astro.callAction(actions.forum.createPost, {
+        topicId: formData.get("topicId") as string,
+        content: formData.get("content") as string,
+    });
+    if (result.data?.success) {
         return Astro.redirect(`/forum/${slug}`);
-    } catch (error) {
-        console.error("Failed to create reply:", error);
     }
 }
 
@@ -185,7 +158,12 @@ const isTopicOwner = user?.id === topic.userId;
             >
                 {
                     user ? (
-                        <form method="POST">
+                        <form id="create-post-form" method="POST">
+                            <input
+                                type="hidden"
+                                name="topicId"
+                                value={topic.id}
+                            />
                             <h3 class="text-xl font-bold mb-4 mt-0 font-serif">
                                 Leave a Reply
                             </h3>
@@ -196,7 +174,11 @@ const isTopicOwner = user?.id === topic.userId;
                                 required
                                 class="textarea-field font-sans mb-4"
                             />
-                            <button type="submit" class="btn-primary">
+                            <button
+                                type="submit"
+                                id="submit-btn"
+                                class="btn-primary"
+                            >
                                 Post Reply
                             </button>
                         </form>
@@ -218,3 +200,15 @@ const isTopicOwner = user?.id === topic.userId;
         </div>
     </main>
 </Layout>
+<script>
+    document.addEventListener("astro:after-swap", () => {
+        const form = document.getElementById("create-post-form");
+        const submitBtn = document.getElementById("submit-btn");
+        form?.addEventListener("submit", () => {
+            if (submitBtn) {
+                submitBtn.textContent = "Posting...";
+                (submitBtn as HTMLButtonElement).disabled = true;
+            }
+        });
+    });
+</script>

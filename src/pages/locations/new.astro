@@ -1,85 +1,30 @@
 ---
-import { drizzle } from "drizzle-orm/d1";
-import { nanoid } from "nanoid";
-import * as schema from "../../db/schema";
+import { actions } from "astro:actions";
 import Layout from "../../layouts/Layout.astro";
 
-const {
-    user,
-    runtime: { env },
-} = Astro.locals;
+const { user } = Astro.locals;
 
 // This page is protected. Redirect to sign-in if the user is not logged in.
 if (!user) {
     return Astro.redirect(`/signin?redirect=${Astro.url.pathname}`);
 }
 
-const db = drizzle(env.DB, { schema });
-
-// Simple slugify function
-const slugify = (text: string) => {
-    return text
-        .toString()
-        .toLowerCase()
-        .replace(/\s+/g, "-") // Replace spaces with -
-        .replace(/[^\w-]+/g, "") // Remove all non-word chars
-        .replace(/--+/g, "-") // Replace multiple - with single -
-        .replace(/^-+/, "") // Trim - from start of text
-        .replace(/-+$/, ""); // Trim - from end of text
-};
-
 if (Astro.request.method === "POST") {
-    try {
-        const formData = await Astro.request.formData();
-        const name = formData.get("name") as string;
-        const description = formData.get("description") as string;
-        const content = formData.get("content") as string;
-        const contact_phone = formData.get("contact_phone") as string;
-        const contact_email = formData.get("contact_email") as string;
-        const contact_website = formData.get("contact_website") as string;
-        const latitudeStr = formData.get("latitude") as string;
-        const longitudeStr = formData.get("longitude") as string;
-        const latitude = latitudeStr ? parseFloat(latitudeStr) : null;
-        const longitude = longitudeStr ? parseFloat(longitudeStr) : null;
-        const isPublicLandStr = formData.get("is_public_land") as string;
-        const isPublicLand =
-            isPublicLandStr === "" ? null : isPublicLandStr === "true";
-
-        if (!name || !content) {
-            // Basic validation
-            throw new Error("Name and content are required.");
-        }
-
-        const slug = `${slugify(name)}-${nanoid(4)}`;
-        const now = new Date();
-        const id = nanoid();
-
-        console.log("Creating location:", { id, name, slug, userId: user.id });
-
-        const result = await db.insert(schema.locations).values({
-            id,
-            name,
-            slug,
-            description,
-            content,
-            contact_phone,
-            contact_email,
-            contact_website,
-            latitude,
-            longitude,
-            isPublicLand,
-            userId: user.id, // Associate the location with the logged-in user
-            createdAt: now,
-            updatedAt: now,
-            verified_count: 0,
-        });
-
-        console.log("Insert result:", result);
-
-        return Astro.redirect(`/locations/${slug}`);
-    } catch (error) {
-        console.error("Failed to create location:", error);
-        // In a real app, you'd want to show an error message to the user
+    const formData = await Astro.request.formData();
+    const result = await Astro.callAction(actions.locations.create, {
+        name: formData.get("name") as string,
+        content: formData.get("content") as string,
+        description: (formData.get("description") as string) || undefined,
+        contact_phone: (formData.get("contact_phone") as string) || undefined,
+        contact_email: (formData.get("contact_email") as string) || undefined,
+        contact_website:
+            (formData.get("contact_website") as string) || undefined,
+        latitude: (formData.get("latitude") as string) || undefined,
+        longitude: (formData.get("longitude") as string) || undefined,
+        isPublicLand: (formData.get("isPublicLand") as string) || undefined,
+    });
+    if (result?.data?.success) {
+        return Astro.redirect(`/locations/${result.data.slug}`);
     }
 }
 ---
@@ -98,7 +43,7 @@ if (Astro.request.method === "POST") {
         </h1>
 
         <div class="section-container">
-            <form method="POST" class="space-y-6">
+            <form method="POST" id="location-form" class="space-y-6">
                 <div>
                     <label for="name" class="form-label">Location Name</label>
                     <input
@@ -215,12 +160,12 @@ if (Astro.request.method === "POST") {
                 </p>
 
                 <div>
-                    <label for="is_public_land" class="form-label"
+                    <label for="isPublicLand" class="form-label"
                         >Land Access</label
                     >
                     <select
-                        id="is_public_land"
-                        name="is_public_land"
+                        id="isPublicLand"
+                        name="isPublicLand"
                         class="input-field"
                     >
                         <option value="" selected>Unknown</option>
@@ -233,8 +178,15 @@ if (Astro.request.method === "POST") {
                     </p>
                 </div>
 
+                <div id="error-message" class="hidden text-red-400 text-sm">
+                </div>
+
                 <div>
-                    <button type="submit" class="w-full md:w-auto btn-primary">
+                    <button
+                        type="submit"
+                        id="submit-btn"
+                        class="w-full md:w-auto btn-primary"
+                    >
                         Save Location
                     </button>
                 </div>
@@ -242,3 +194,25 @@ if (Astro.request.method === "POST") {
         </div>
     </main>
 </Layout>
+
+<script>
+    document.addEventListener("astro:after-swap", (e) => {
+        const form = document.getElementById(
+            "location-form",
+        ) as HTMLFormElement;
+        const submitBtn = document.getElementById(
+            "submit-btn",
+        ) as HTMLButtonElement;
+        const errorMessage = document.getElementById(
+            "error-message",
+        ) as HTMLDivElement;
+
+        if (!form) return;
+
+        form.addEventListener("submit", () => {
+            errorMessage.classList.add("hidden");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Saving...";
+        });
+    });
+</script>

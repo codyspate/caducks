@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { actions } from "astro:actions";
+import { useEffect, useRef, useState } from "react";
 
 interface VoteComponentProps {
   locationId: string;
@@ -44,24 +45,24 @@ export default function VoteComponent({
     const newValue = userVote === value ? 0 : value;
 
     setIsLoading(true);
-    try {
-      const response = await fetch("/api/locations/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locationId, value: newValue }),
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.voteCount !== null) {
-          setVoteCount(data.voteCount);
-        }
-        setUserVote(data.userVote);
-      }
-    } catch (error) {
+    const { data, error } = await actions.locations.vote({
+      locationId,
+      value: newValue,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
       console.error("Vote failed:", error);
-    } finally {
-      setIsLoading(false);
+      return;
+    }
+
+    if (data?.success) {
+      if (data.voteCount !== null) {
+        setVoteCount(data.voteCount);
+      }
+      setUserVote(data.userVote);
     }
   };
 

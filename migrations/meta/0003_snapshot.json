@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "489d273b-5190-413a-9f7b-dd5a2a0a4d56",
-  "prevId": "db1adf27-fa30-4555-ae54-eb04e860d89e",
+  "id": "8f334958-819c-4848-9724-1e12ea784a67",
+  "prevId": "489d273b-5190-413a-9f7b-dd5a2a0a4d56",
   "tables": {
     "account": {
       "name": "account",
@@ -604,6 +604,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "last_updated_by_user_id": {
+          "name": "last_updated_by_user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -632,6 +639,15 @@
           "tableFrom": "location",
           "tableTo": "user",
           "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "location_last_updated_by_user_id_user_id_fk": {
+          "name": "location_last_updated_by_user_id_user_id_fk",
+          "tableFrom": "location",
+          "tableTo": "user",
+          "columnsFrom": ["last_updated_by_user_id"],
           "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"

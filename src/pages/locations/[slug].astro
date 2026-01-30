@@ -1,45 +1,31 @@
 ---
-import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { marked } from "marked";
 import LocationMap from "../../components/LocationMap";
 import VoteComponent from "../../components/VoteComponent";
 import * as schema from "../../db/schema";
 import Layout from "../../layouts/Layout.astro";
-import { getLocationBySlug } from "../../lib/data";
+import { getLocationBySlug, getUserLocationVote } from "../../lib/data";
 
 const {
-    user,
-    runtime: { env },
+  user,
+  runtime: { env },
 } = Astro.locals;
 const { slug } = Astro.params;
 
 if (!slug) {
-    return Astro.redirect("/404");
+  return Astro.redirect("/404");
 }
 
 const db = drizzle(env.DB, { schema });
 const location = await getLocationBySlug(db, slug);
 
 if (!location) {
-    return Astro.redirect("/404");
+  return Astro.redirect("/404");
 }
 
 // Get user's vote for this location
-let userVote = 0;
-if (user) {
-    const voteResult = await db
-        .select({ value: schema.location_votes.value })
-        .from(schema.location_votes)
-        .where(
-            and(
-                eq(schema.location_votes.userId, user.id),
-                eq(schema.location_votes.locationId, location.id),
-            ),
-        )
-        .limit(1);
-    userVote = voteResult[0]?.value ?? 0;
-}
+const userVote = user ? await getUserLocationVote(db, user.id, location.id) : 0;
 
 const content = marked.parse(location.content);
 ---
@@ -206,31 +192,20 @@ const content = marked.parse(location.content);
                         class="flex flex-col items-start md:items-end gap-3 min-w-50 border-t md:border-t-0 md:border-l border-neutral-800 pt-4 md:pt-0 md:pl-6 w-full md:w-auto mt-4 md:mt-0"
                     >
                         {
-                            user && user.id === location.userId && (
+                            location.lastUpdatedByName && (
+                                <p class="text-xs text-neutral-500">
+                                    Last updated by {location.lastUpdatedByName}
+                                </p>
+                            )
+                        }
+                        {
+                            user && (
                                 <div class="w-full md:text-right">
-                                    <p class="text-sm text-neutral-500 mb-2">
-                                        You created this location.
-                                    </p>
                                     <a
                                         href={`/locations/${location.slug}/edit`}
                                         class="btn-primary inline-block w-full md:w-auto text-center text-sm py-2 px-4"
                                     >
                                         Edit Location
-                                    </a>
-                                </div>
-                            )
-                        }
-                        {
-                            user && user.id !== location.userId && (
-                                <div class="w-full md:text-right">
-                                    <p class="text-sm text-neutral-500 mb-2">
-                                        Have updated info?
-                                    </p>
-                                    <a
-                                        href={`mailto:admin@caducks.com?subject=Update Request: ${location.name}&body=I have updated contact info for ${location.name}.`}
-                                        class="btn-secondary inline-block w-full md:w-auto text-center text-sm py-2 px-4"
-                                    >
-                                        Suggest Edit
                                     </a>
                                 </div>
                             )

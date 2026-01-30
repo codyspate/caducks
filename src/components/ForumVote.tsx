@@ -1,3 +1,4 @@
+import { actions } from "astro:actions";
 import { useState } from "react";
 
 interface ForumVoteProps {
@@ -25,24 +26,25 @@ export default function ForumVote({
     const newValue = userVote === value ? 0 : value;
 
     setIsLoading(true);
-    try {
-      const response = await fetch("/api/forum/vote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topicId, postId, value: newValue }),
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.voteCount !== null) {
-          setVoteCount(data.voteCount);
-        }
-        setUserVote(data.userVote);
-      }
-    } catch (error) {
+    const { data, error } = await actions.forum.vote({
+      topicId,
+      postId,
+      value: newValue,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
       console.error("Vote failed:", error);
-    } finally {
-      setIsLoading(false);
+      return;
+    }
+
+    if (data?.success) {
+      if (data.voteCount !== null) {
+        setVoteCount(data.voteCount);
+      }
+      setUserVote(data.userVote);
     }
   };
 

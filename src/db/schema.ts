@@ -101,6 +101,9 @@ export const locations = sqliteTable("location", {
   isPublicLand: integer("is_public_land", { mode: "boolean" }),
   verified_count: integer("verified_count").notNull().default(0),
   userId: text("user_id").references(() => user.id), // Foreign key to user who created the location
+  lastUpdatedByUserId: text("last_updated_by_user_id").references(
+    () => user.id,
+  ), // Foreign key to user who last updated the location
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
   updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
 });

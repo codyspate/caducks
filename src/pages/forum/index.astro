@@ -14,16 +14,16 @@ const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
 const search = url.searchParams.get("q")?.trim() || undefined;
 
 const {
-    items: topics,
-    totalPages,
-    currentPage,
-    searchQuery,
+  items: topics,
+  totalPages,
+  currentPage,
+  searchQuery,
 } = await getAllTopics(db, page, undefined, search);
 
 // Build base URL for pagination (preserve search query)
 const paginationBaseUrl = search
-    ? `/forum?q=${encodeURIComponent(search)}`
-    : "/forum";
+  ? `/forum?q=${encodeURIComponent(search)}`
+  : "/forum";
 ---
 
 <Layout title="Community Forum - California Ducks">
