@@ -3,9 +3,10 @@ interface Props {
     title: string;
     body: string | null;
     href: string;
+    isPublicLand?: boolean | null;
 }
 
-const { href, title, body } = Astro.props;
+const { href, title, body, isPublicLand } = Astro.props;
 ---
 
 <li
@@ -24,5 +25,14 @@ const { href, title, body } = Astro.props;
         <p class="mt-2 text-neutral-400">
             {body ?? "No description available"}
         </p>
+        {
+            isPublicLand !== null && isPublicLand !== undefined && (
+                <p
+                    class={`mt-2 text-xs ${isPublicLand ? "text-green-500" : "text-neutral-500"}`}
+                >
+                    {isPublicLand ? "Public Land" : "Private Land"}
+                </p>
+            )
+        }
     </a>
 </li>

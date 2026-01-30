@@ -1,0 +1,1 @@
+ALTER TABLE `location` ADD `is_public_land` integer;

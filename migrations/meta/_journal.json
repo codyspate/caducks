@@ -15,6 +15,13 @@
       "when": 1769205627241,
       "tag": "0001_robust_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1769794403280,
+      "tag": "0002_strong_paibok",
+      "breakpoints": true
     }
   ]
 }

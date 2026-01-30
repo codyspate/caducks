@@ -49,6 +49,9 @@ if (Astro.request.method === "POST") {
         const longitudeStr = formData.get("longitude") as string;
         const latitude = latitudeStr ? parseFloat(latitudeStr) : null;
         const longitude = longitudeStr ? parseFloat(longitudeStr) : null;
+        const isPublicLandStr = formData.get("is_public_land") as string;
+        const isPublicLand =
+            isPublicLandStr === "" ? null : isPublicLandStr === "true";
 
         if (!name || !newContent) {
             throw new Error("Name and content are required.");
@@ -69,6 +72,7 @@ if (Astro.request.method === "POST") {
                 contact_website,
                 latitude,
                 longitude,
+                isPublicLand,
                 updatedAt: now,
             })
             .where(eq(schema.locations.id, location.id));
@@ -225,6 +229,37 @@ if (Astro.request.method === "POST") {
                     Tip: Find coordinates on Google Maps by right-clicking a
                     location.
                 </p>
+
+                <div>
+                    <label for="is_public_land" class="form-label"
+                        >Land Access</label
+                    >
+                    <select
+                        id="is_public_land"
+                        name="is_public_land"
+                        class="input-field"
+                    >
+                        <option
+                            value=""
+                            selected={location.isPublicLand === null}
+                            >Unknown</option
+                        >
+                        <option
+                            value="true"
+                            selected={location.isPublicLand === true}
+                            >Public Land</option
+                        >
+                        <option
+                            value="false"
+                            selected={location.isPublicLand === false}
+                            >Private Land</option
+                        >
+                    </select>
+                    <p class="text-sm text-neutral-400 mt-1">
+                        Indicates whether the land is publicly accessible or
+                        privately owned.
+                    </p>
+                </div>
 
                 <div class="flex gap-4">
                     <button type="submit" class="btn-primary">

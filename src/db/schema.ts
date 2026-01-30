@@ -98,6 +98,7 @@ export const locations = sqliteTable("location", {
   contact_website: text("contact_website"),
   latitude: real("latitude"),
   longitude: real("longitude"),
+  isPublicLand: integer("is_public_land", { mode: "boolean" }),
   verified_count: integer("verified_count").notNull().default(0),
   userId: text("user_id").references(() => user.id), // Foreign key to user who created the location
   createdAt: integer("created_at", { mode: "timestamp" }).notNull(),

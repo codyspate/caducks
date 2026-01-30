@@ -13,6 +13,7 @@
 		"@astrojs/cloudflare": "^12.6.12",
 		"@astrojs/react": "^4.4.2",
 		"@better-auth/passkey": "^1.4.15",
+		"@cloudflare/workers-types": "^4.20260130.0",
 		"@tailwindcss/vite": "^4.1.18",
 		"@types/marked": "^6.0.0",
 		"@types/react": "^19.2.8",
