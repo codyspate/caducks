@@ -1,0 +1,288 @@
+---
+import { drizzle } from "drizzle-orm/d1";
+import * as schema from "../../db/schema";
+import Layout from "../../layouts/Layout.astro";
+import { desc, gt } from "drizzle-orm";
+
+const { user } = Astro.locals;
+
+// This page is protected. Redirect to sign-in if the user is not logged in.
+if (!user) {
+    return Astro.redirect(`/signin?redirect=${Astro.url.pathname}`);
+}
+
+const db = drizzle(Astro.locals.runtime.env.DB, { schema });
+
+// Fetch locations for the dropdown
+const VOTE_THRESHOLD = -3;
+const locations = await db
+    .select({
+        id: schema.locations.id,
+        name: schema.locations.name,
+        latitude: schema.locations.latitude,
+        longitude: schema.locations.longitude,
+    })
+    .from(schema.locations)
+    .where(gt(schema.locations.verified_count, VOTE_THRESHOLD))
+    .orderBy(desc(schema.locations.name))
+    .limit(100);
+---
+
+<Layout title="New Journal Entry - California Ducks">
+    <main class="mx-auto p-4 w-200 max-w-full text-neutral-200">
+        <div class="mb-8">
+            <a href="/journal" class="link-accent">&larr; Back to Journal</a>
+        </div>
+
+        <h1
+            class="text-4xl font-bold leading-tight mb-6 font-serif text-neutral-100"
+        >
+            New Journal Entry
+        </h1>
+
+        <div class="section-container">
+            <form id="journal-form" class="space-y-6">
+                <div>
+                    <label for="huntDate" class="form-label">Hunt Date</label>
+                    <input
+                        type="date"
+                        id="huntDate"
+                        name="huntDate"
+                        required
+                        class="input-field"
+                        max={new Date().toISOString().split("T")[0]}
+                    />
+                </div>
+
+                <div>
+                    <label for="numHunters" class="form-label"
+                        >Number of Hunters</label
+                    >
+                    <input
+                        type="number"
+                        id="numHunters"
+                        name="numHunters"
+                        required
+                        min="1"
+                        class="input-field"
+                        placeholder="e.g., 2"
+                    />
+                </div>
+
+                <div>
+                    <label for="locationId" class="form-label">Location</label>
+                    <div class="flex gap-2">
+                        <select
+                            id="locationId"
+                            name="locationId"
+                            required
+                            class="input-field flex-1"
+                        >
+                            <option value="">Select a location...</option>
+                            {
+                                locations.map((loc) => (
+                                    <option value={loc.id}>{loc.name}</option>
+                                ))
+                            }
+                        </select>
+                        <a
+                            href="/locations/new"
+                            class="btn-secondary whitespace-nowrap"
+                            title="Create a new location"
+                        >
+                            + New
+                        </a>
+                    </div>
+                    <p class="text-sm text-neutral-400 mt-1">
+                        Don't see your location? Create a new one.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="form-label">Harvest</label>
+                    <div id="harvest-list" class="space-y-2">
+                        <!-- Harvest items will be added here dynamically -->
+                    </div>
+                    <button
+                        type="button"
+                        id="add-harvest-btn"
+                        class="btn-secondary mt-2"
+                    >
+                        + Add Bird
+                    </button>
+                </div>
+
+                <div>
+                    <label for="notes" class="form-label"
+                        >Notes (Optional)</label
+                    >
+                    <textarea
+                        id="notes"
+                        name="notes"
+                        rows="5"
+                        class="textarea-field font-sans"
+                        placeholder="Add any notes about your hunt..."
+                    ></textarea>
+                </div>
+
+                <div id="error-message" class="hidden text-red-400 text-sm">
+                </div>
+
+                <div class="flex gap-4">
+                    <button
+                        type="submit"
+                        id="submit-btn"
+                        class="btn-primary flex-1 md:flex-initial"
+                    >
+                        Save Entry
+                    </button>
+                    <a href="/journal" class="btn-secondary"> Cancel </a>
+                </div>
+            </form>
+        </div>
+    </main>
+</Layout>
+
+<script>
+    import { actions } from "astro:actions";
+
+    // Common bird types for quick selection
+    const COMMON_BIRDS = [
+        "Mallard",
+        "Pintail",
+        "Gadwall",
+        "Wigeon",
+        "Teal (Green-winged)",
+        "Teal (Blue-winged)",
+        "Teal (Cinnamon)",
+        "Shoveler",
+        "Canvasback",
+        "Redhead",
+        "Scaup",
+        "Ring-necked Duck",
+        "Bufflehead",
+        "Goldeneye",
+        "Canada Goose",
+        "Snow Goose",
+        "Specklebelly Goose",
+        "White-fronted Goose",
+        "Other",
+    ];
+
+    let harvestCount = 0;
+
+    function addHarvestInput() {
+        harvestCount++;
+        const harvestList = document.getElementById("harvest-list");
+        if (!harvestList) return;
+
+        const harvestItem = document.createElement("div");
+        harvestItem.className = "flex gap-2";
+        harvestItem.id = `harvest-${harvestCount}`;
+
+        harvestItem.innerHTML = `
+            <select name="harvest-type-${harvestCount}" class="input-field flex-1" required>
+                <option value="">Select bird type...</option>
+                ${COMMON_BIRDS.map((bird) => `<option value="${bird}">${bird}</option>`).join("")}
+            </select>
+            <input
+                type="number"
+                name="harvest-count-${harvestCount}"
+                class="input-field w-24"
+                placeholder="Count"
+                min="1"
+                required
+            />
+            <button
+                type="button"
+                class="btn-secondary px-3"
+                onclick="this.parentElement.remove()"
+                title="Remove"
+            >
+                ✕
+            </button>
+        `;
+
+        harvestList.appendChild(harvestItem);
+    }
+
+    // Add first harvest input by default
+    addHarvestInput();
+
+    document.getElementById("add-harvest-btn")?.addEventListener("click", () => {
+        addHarvestInput();
+    });
+
+    document
+        .getElementById("journal-form")
+        ?.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById(
+                "submit-btn",
+            ) as HTMLButtonElement;
+            const errorMessage = document.getElementById(
+                "error-message",
+            ) as HTMLDivElement;
+
+            errorMessage.classList.add("hidden");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Saving...";
+
+            const form = e.target as HTMLFormElement;
+            const formData = new FormData(form);
+
+            // Collect harvests
+            const harvests: { birdType: string; count: number }[] = [];
+            for (let i = 1; i <= harvestCount; i++) {
+                const typeInput = formData.get(
+                    `harvest-type-${i}`,
+                ) as string | null;
+                const countInput = formData.get(
+                    `harvest-count-${i}`,
+                ) as string | null;
+
+                if (typeInput && countInput) {
+                    harvests.push({
+                        birdType: typeInput,
+                        count: Number.parseInt(countInput),
+                    });
+                }
+            }
+
+            if (harvests.length === 0) {
+                errorMessage.textContent =
+                    "Please add at least one bird to the harvest.";
+                errorMessage.classList.remove("hidden");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Save Entry";
+                return;
+            }
+
+            try {
+                const result = await actions.journals.create({
+                    huntDate: formData.get("huntDate") as string,
+                    numHunters: Number.parseInt(
+                        formData.get("numHunters") as string,
+                    ),
+                    locationId: formData.get("locationId") as string,
+                    notes: (formData.get("notes") as string) || undefined,
+                    harvests,
+                });
+
+                if (result?.data?.success) {
+                    window.location.href = `/journal/${result.data.id}`;
+                } else {
+                    throw new Error("Failed to create entry");
+                }
+            } catch (error) {
+                errorMessage.textContent =
+                    error instanceof Error
+                        ? error.message
+                        : "An error occurred. Please try again.";
+                errorMessage.classList.remove("hidden");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Save Entry";
+            }
+        });
+</script>

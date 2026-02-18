@@ -1,0 +1,116 @@
+---
+import { drizzle } from "drizzle-orm/d1";
+import * as schema from "../../db/schema";
+import Layout from "../../layouts/Layout.astro";
+import { getAllJournalEntries } from "../../lib/data";
+import Pagination from "../../components/Pagination.astro";
+
+const { user } = Astro.locals;
+
+// This page is protected. Redirect to sign-in if the user is not logged in.
+if (!user) {
+    return Astro.redirect(`/signin?redirect=${Astro.url.pathname}`);
+}
+
+const db = drizzle(Astro.locals.runtime.env.DB, { schema });
+
+// Get page from query string
+const url = new URL(Astro.request.url);
+const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+
+const { items: entries, totalPages, currentPage } = await getAllJournalEntries(
+    db,
+    user.id,
+    page,
+);
+---
+
+<Layout title="Hunt Journal - California Ducks">
+    <main class="mx-auto p-4 w-200 max-w-full text-neutral-200">
+        <h1
+            class="text-5xl md:text-6xl font-bold leading-tight text-center mb-8 font-serif"
+        >
+            Hunt <span
+                class="text-transparent bg-clip-text bg-linear-to-r from-amber-600 via-amber-500 to-neutral-200"
+                >Journal</span
+            >
+        </h1>
+
+        <div class="mb-6 text-center">
+            <a href="/journal/new" class="btn-primary inline-block">
+                + New Journal Entry
+            </a>
+        </div>
+
+        {
+            entries.length === 0 ? (
+                <div class="section-container text-center">
+                    <p class="text-neutral-400 mb-4">
+                        You haven't created any journal entries yet.
+                    </p>
+                    <p class="text-neutral-400">
+                        Start documenting your hunts by creating your first
+                        entry!
+                    </p>
+                </div>
+            ) : (
+                <div class="space-y-4">
+                    {entries.map((entry) => (
+                        <div class="section-container">
+                            <a
+                                href={`/journal/${entry.id}`}
+                                class="block hover:bg-neutral-800 transition-colors -m-6 p-6 rounded-lg"
+                            >
+                                <div class="flex justify-between items-start mb-2">
+                                    <h2 class="text-2xl font-bold text-neutral-100">
+                                        {new Date(
+                                            entry.huntDate,
+                                        ).toLocaleDateString("en-US", {
+                                            month: "long",
+                                            day: "numeric",
+                                            year: "numeric",
+                                        })}
+                                    </h2>
+                                    <span class="text-sm text-neutral-400">
+                                        {entry.numHunters}{" "}
+                                        {entry.numHunters === 1
+                                            ? "hunter"
+                                            : "hunters"}
+                                    </span>
+                                </div>
+
+                                <div class="text-amber-500 mb-2">
+                                    📍 {entry.locationName || "Unknown Location"}
+                                </div>
+
+                                {entry.harvests && entry.harvests.length > 0 && (
+                                    <div class="text-neutral-400 text-sm">
+                                        Harvest:{" "}
+                                        {entry.harvests
+                                            .map(
+                                                (h) =>
+                                                    `${h.count} ${h.birdType}`,
+                                            )
+                                            .join(", ")}
+                                    </div>
+                                )}
+
+                                {entry.notes && (
+                                    <p class="text-neutral-400 text-sm mt-2 line-clamp-2">
+                                        {entry.notes}
+                                    </p>
+                                )}
+                            </a>
+                        </div>
+                    ))}
+                </div>
+            )
+        }
+
+        <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            baseUrl="/journal"
+        />
+    </main>
+</Layout>

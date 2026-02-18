@@ -389,3 +389,93 @@ export async function getForumPostById(
 
   return result[0];
 }
+
+// --- Journal Helpers ---
+
+export async function getAllJournalEntries(
+  db: DrizzleD1Database<typeof schema>,
+  userId: string,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<PaginatedResult<any>> {
+  const offset = (page - 1) * pageSize;
+
+  // Get total count
+  const countResult = await db
+    .select({ count: count() })
+    .from(schema.journal_entries)
+    .where(eq(schema.journal_entries.userId, userId));
+  const totalItems = countResult[0]?.count ?? 0;
+
+  // Get paginated results
+  const results = await db
+    .select({
+      entry: schema.journal_entries,
+      locationName: schema.locations.name,
+      authorName: user.name,
+      authorDisplayName: user.displayName,
+    })
+    .from(schema.journal_entries)
+    .leftJoin(schema.locations, eq(schema.journal_entries.locationId, schema.locations.id))
+    .leftJoin(user, eq(schema.journal_entries.userId, user.id))
+    .where(eq(schema.journal_entries.userId, userId))
+    .orderBy(desc(schema.journal_entries.huntDate))
+    .limit(pageSize)
+    .offset(offset);
+
+  const items = await Promise.all(
+    results.map(async (row) => {
+      const harvests = await db
+        .select()
+        .from(schema.journal_harvests)
+        .where(eq(schema.journal_harvests.journalEntryId, row.entry.id));
+
+      return {
+        ...row.entry,
+        locationName: row.locationName,
+        author: row.authorDisplayName || row.authorName || "Unknown",
+        harvests: harvests,
+      };
+    }),
+  );
+
+  return {
+    items,
+    totalItems,
+    totalPages: Math.ceil(totalItems / pageSize),
+    currentPage: page,
+    pageSize,
+  };
+}
+
+export async function getJournalEntryById(
+  db: DrizzleD1Database<typeof schema>,
+  entryId: string,
+): Promise<any | undefined> {
+  const result = await db
+    .select({
+      entry: schema.journal_entries,
+      locationName: schema.locations.name,
+      authorName: user.name,
+      authorDisplayName: user.displayName,
+    })
+    .from(schema.journal_entries)
+    .leftJoin(schema.locations, eq(schema.journal_entries.locationId, schema.locations.id))
+    .leftJoin(user, eq(schema.journal_entries.userId, user.id))
+    .where(eq(schema.journal_entries.id, entryId))
+    .limit(1);
+
+  if (!result[0]) return undefined;
+
+  const harvests = await db
+    .select()
+    .from(schema.journal_harvests)
+    .where(eq(schema.journal_harvests.journalEntryId, entryId));
+
+  return {
+    ...result[0].entry,
+    locationName: result[0].locationName,
+    author: result[0].authorDisplayName || result[0].authorName || "Unknown",
+    harvests,
+  };
+}
