@@ -9,6 +9,10 @@ if (!user) {
     return Astro.redirect(`/signin?redirect=${Astro.url.pathname}`);
 }
 
+// Get redirect parameter
+const url = new URL(Astro.request.url);
+const redirectTo = url.searchParams.get("redirect");
+
 if (Astro.request.method === "POST") {
     const formData = await Astro.request.formData();
     const result = await Astro.callAction(actions.locations.create, {
@@ -24,6 +28,10 @@ if (Astro.request.method === "POST") {
         isPublicLand: (formData.get("isPublicLand") as string) || undefined,
     });
     if (result?.data?.success) {
+        // Redirect to the specified page or to the location detail page
+        if (redirectTo) {
+            return Astro.redirect(decodeURIComponent(redirectTo));
+        }
         return Astro.redirect(`/locations/${result.data.slug}`);
     }
 }

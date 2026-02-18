@@ -171,7 +171,81 @@ const locations = await db
 
     let harvestCount = 0;
 
-    function addHarvestInput() {
+    // Save form state to localStorage
+    function saveFormState() {
+        const form = document.getElementById(
+            "journal-form",
+        ) as HTMLFormElement;
+        if (!form) return;
+
+        const formData = new FormData(form);
+        const state = {
+            huntDate: formData.get("huntDate"),
+            numHunters: formData.get("numHunters"),
+            locationId: formData.get("locationId"),
+            notes: formData.get("notes"),
+            harvests: [] as { type: string; count: string }[],
+        };
+
+        // Collect harvests
+        for (let i = 1; i <= harvestCount; i++) {
+            const type = formData.get(`harvest-type-${i}`) as string | null;
+            const count = formData.get(`harvest-count-${i}`) as string | null;
+            if (type && count) {
+                state.harvests.push({ type, count });
+            }
+        }
+
+        localStorage.setItem("journalEntryDraft", JSON.stringify(state));
+    }
+
+    // Restore form state from localStorage
+    function restoreFormState() {
+        const savedState = localStorage.getItem("journalEntryDraft");
+        if (!savedState) return;
+
+        try {
+            const state = JSON.parse(savedState);
+
+            // Restore basic fields
+            const huntDateInput = document.getElementById(
+                "huntDate",
+            ) as HTMLInputElement;
+            const numHuntersInput = document.getElementById(
+                "numHunters",
+            ) as HTMLInputElement;
+            const locationIdInput = document.getElementById(
+                "locationId",
+            ) as HTMLSelectElement;
+            const notesInput = document.getElementById(
+                "notes",
+            ) as HTMLTextAreaElement;
+
+            if (huntDateInput && state.huntDate)
+                huntDateInput.value = state.huntDate;
+            if (numHuntersInput && state.numHunters)
+                numHuntersInput.value = state.numHunters;
+            if (locationIdInput && state.locationId)
+                locationIdInput.value = state.locationId;
+            if (notesInput && state.notes) notesInput.value = state.notes;
+
+            // Restore harvests
+            if (state.harvests && state.harvests.length > 0) {
+                // Remove the default harvest input
+                const harvestList = document.getElementById("harvest-list");
+                if (harvestList) harvestList.innerHTML = "";
+
+                // Add saved harvests
+                for (const harvest of state.harvests) {
+                    addHarvestInput(harvest.type, harvest.count);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to restore form state:", error);
+        }
+    }
+
+    function addHarvestInput(birdType = "", count = "") {
         harvestCount++;
         const harvestList = document.getElementById("harvest-list");
         if (!harvestList) return;
@@ -183,7 +257,10 @@ const locations = await db
         harvestItem.innerHTML = `
             <select name="harvest-type-${harvestCount}" class="input-field flex-1" required>
                 <option value="">Select bird type...</option>
-                ${COMMON_BIRDS.map((bird) => `<option value="${bird}">${bird}</option>`).join("")}
+                ${COMMON_BIRDS.map(
+                    (bird) =>
+                        `<option value="${bird}" ${bird === birdType ? "selected" : ""}>${bird}</option>`,
+                ).join("")}
             </select>
             <input
                 type="number"
@@ -191,6 +268,7 @@ const locations = await db
                 class="input-field w-24"
                 placeholder="Count"
                 min="1"
+                value="${count}"
                 required
             />
             <button
@@ -206,12 +284,39 @@ const locations = await db
         harvestList.appendChild(harvestItem);
     }
 
-    // Add first harvest input by default
-    addHarvestInput();
+    // Check if we're returning from location creation
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnFromLocation = urlParams.get("from") === "location";
+
+    // Restore saved state if returning from location creation
+    if (returnFromLocation) {
+        restoreFormState();
+    } else {
+        // Add first harvest input by default
+        addHarvestInput();
+    }
 
     document.getElementById("add-harvest-btn")?.addEventListener("click", () => {
         addHarvestInput();
     });
+
+    // Save state before navigating to create location
+    document.querySelectorAll('a[href="/locations/new"]').forEach((link) => {
+        link.addEventListener("click", (e) => {
+            e.preventDefault();
+            saveFormState();
+            window.location.href =
+                "/locations/new?redirect=/journal/new%3Ffrom%3Dlocation";
+        });
+    });
+
+    // Auto-save form state periodically
+    const form = document.getElementById("journal-form");
+    if (form) {
+        form.addEventListener("input", () => {
+            saveFormState();
+        });
+    }
 
     document
         .getElementById("journal-form")
@@ -271,6 +376,8 @@ const locations = await db
                 });
 
                 if (result?.data?.success) {
+                    // Clear saved state on successful submission
+                    localStorage.removeItem("journalEntryDraft");
                     window.location.href = `/journal/${result.data.id}`;
                 } else {
                     throw new Error("Failed to create entry");
