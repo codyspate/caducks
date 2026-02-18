@@ -2,7 +2,7 @@
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "../../db/schema";
 import Layout from "../../layouts/Layout.astro";
-import { desc, gt } from "drizzle-orm";
+import { gt } from "drizzle-orm";
 
 const { user } = Astro.locals;
 
@@ -24,7 +24,7 @@ const locations = await db
     })
     .from(schema.locations)
     .where(gt(schema.locations.verified_count, VOTE_THRESHOLD))
-    .orderBy(desc(schema.locations.name))
+    .orderBy(schema.locations.name)
     .limit(100);
 ---
 

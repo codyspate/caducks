@@ -1,6 +1,6 @@
 ---
 import { drizzle } from "drizzle-orm/d1";
-import { desc, gt } from "drizzle-orm";
+import { gt } from "drizzle-orm";
 import * as schema from "../../../db/schema";
 import Layout from "../../../layouts/Layout.astro";
 import { getJournalEntryById } from "../../../lib/data";
@@ -40,7 +40,7 @@ const locations = await db
     })
     .from(schema.locations)
     .where(gt(schema.locations.verified_count, VOTE_THRESHOLD))
-    .orderBy(desc(schema.locations.name))
+    .orderBy(schema.locations.name)
     .limit(100);
 
 const huntDate = new Date(entry.huntDate);

@@ -397,7 +397,22 @@ export async function getAllJournalEntries(
   userId: string,
   page = 1,
   pageSize = DEFAULT_PAGE_SIZE,
-): Promise<PaginatedResult<any>> {
+): Promise<
+  PaginatedResult<{
+    id: string;
+    huntDate: Date;
+    numHunters: number;
+    locationId: string;
+    notes: string | null;
+    weather: string | null;
+    userId: string;
+    createdAt: Date;
+    updatedAt: Date;
+    locationName: string | null;
+    author: string;
+    harvests: (typeof schema.journal_harvests.$inferSelect)[];
+  }>
+> {
   const offset = (page - 1) * pageSize;
 
   // Get total count
@@ -451,7 +466,23 @@ export async function getAllJournalEntries(
 export async function getJournalEntryById(
   db: DrizzleD1Database<typeof schema>,
   entryId: string,
-): Promise<any | undefined> {
+): Promise<
+  | {
+      id: string;
+      huntDate: Date;
+      numHunters: number;
+      locationId: string;
+      notes: string | null;
+      weather: string | null;
+      userId: string;
+      createdAt: Date;
+      updatedAt: Date;
+      locationName: string | null;
+      author: string;
+      harvests: (typeof schema.journal_harvests.$inferSelect)[];
+    }
+  | undefined
+> {
   const result = await db
     .select({
       entry: schema.journal_entries,
