@@ -701,4 +701,209 @@ export const server = {
       },
     }),
   },
+
+  journals: {
+    create: defineAction({
+      accept: "json",
+      input: z.object({
+        huntDate: z.string(), // ISO date string
+        numHunters: z.number().int().min(1),
+        locationId: z.string(),
+        notes: z.string().optional(),
+        harvests: z.array(
+          z.object({
+            birdType: z.string(),
+            count: z.number().int().min(1),
+          }),
+        ),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        if (!user) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Must be logged in",
+          });
+        }
+
+        const db = drizzle(context.locals.runtime.env.DB, { schema });
+        const now = new Date();
+        const id = nanoid();
+        const huntDate = new Date(input.huntDate);
+
+        // Fetch location to get coordinates for weather
+        const location = await db
+          .select()
+          .from(schema.locations)
+          .where(eq(schema.locations.id, input.locationId))
+          .limit(1);
+
+        if (!location[0]) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Location not found",
+          });
+        }
+
+        // TODO: Fetch weather data if location has coordinates
+        let weatherData = null;
+        // if (location[0].latitude && location[0].longitude) {
+        //   weatherData = await fetchWeatherData(
+        //     location[0].latitude,
+        //     location[0].longitude,
+        //     huntDate
+        //   );
+        // }
+
+        await db.insert(schema.journal_entries).values({
+          id,
+          huntDate,
+          numHunters: input.numHunters,
+          locationId: input.locationId,
+          notes: input.notes || null,
+          weather: weatherData ? JSON.stringify(weatherData) : null,
+          userId: user.id,
+          createdAt: now,
+          updatedAt: now,
+        });
+
+        // Insert harvests
+        for (const harvest of input.harvests) {
+          await db.insert(schema.journal_harvests).values({
+            id: nanoid(),
+            journalEntryId: id,
+            birdType: harvest.birdType,
+            count: harvest.count,
+          });
+        }
+
+        return { success: true, id };
+      },
+    }),
+
+    update: defineAction({
+      accept: "json",
+      input: z.object({
+        id: z.string(),
+        huntDate: z.string(),
+        numHunters: z.number().int().min(1),
+        locationId: z.string(),
+        notes: z.string().optional(),
+        harvests: z.array(
+          z.object({
+            birdType: z.string(),
+            count: z.number().int().min(1),
+          }),
+        ),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        if (!user) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Must be logged in",
+          });
+        }
+
+        const db = drizzle(context.locals.runtime.env.DB, { schema });
+
+        const existingEntry = await db
+          .select({ userId: schema.journal_entries.userId })
+          .from(schema.journal_entries)
+          .where(eq(schema.journal_entries.id, input.id))
+          .limit(1);
+
+        if (!existingEntry[0]) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Journal entry not found",
+          });
+        }
+
+        if (existingEntry[0].userId !== user.id) {
+          throw new ActionError({
+            code: "FORBIDDEN",
+            message: "Not authorized to update this entry",
+          });
+        }
+
+        const huntDate = new Date(input.huntDate);
+
+        await db
+          .update(schema.journal_entries)
+          .set({
+            huntDate,
+            numHunters: input.numHunters,
+            locationId: input.locationId,
+            notes: input.notes || null,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.journal_entries.id, input.id));
+
+        // Delete existing harvests and insert new ones
+        await db
+          .delete(schema.journal_harvests)
+          .where(eq(schema.journal_harvests.journalEntryId, input.id));
+
+        for (const harvest of input.harvests) {
+          await db.insert(schema.journal_harvests).values({
+            id: nanoid(),
+            journalEntryId: input.id,
+            birdType: harvest.birdType,
+            count: harvest.count,
+          });
+        }
+
+        return { success: true, id: input.id };
+      },
+    }),
+
+    delete: defineAction({
+      accept: "json",
+      input: z.object({
+        id: z.string(),
+      }),
+      handler: async (input, context) => {
+        const user = context.locals.user;
+        if (!user) {
+          throw new ActionError({
+            code: "UNAUTHORIZED",
+            message: "Must be logged in",
+          });
+        }
+
+        const db = drizzle(context.locals.runtime.env.DB, { schema });
+
+        const entry = await db
+          .select({ userId: schema.journal_entries.userId })
+          .from(schema.journal_entries)
+          .where(eq(schema.journal_entries.id, input.id))
+          .limit(1);
+
+        if (!entry[0]) {
+          throw new ActionError({
+            code: "NOT_FOUND",
+            message: "Journal entry not found",
+          });
+        }
+
+        if (entry[0].userId !== user.id) {
+          throw new ActionError({
+            code: "FORBIDDEN",
+            message: "Not authorized to delete this entry",
+          });
+        }
+
+        await db
+          .delete(schema.journal_harvests)
+          .where(eq(schema.journal_harvests.journalEntryId, input.id));
+
+        await db
+          .delete(schema.journal_entries)
+          .where(eq(schema.journal_entries.id, input.id));
+
+        return { success: true };
+      },
+    }),
+  },
 };

@@ -29,6 +29,13 @@
       "when": 1769805432834,
       "tag": "0003_pale_purifiers",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1771401207174,
+      "tag": "0004_aspiring_johnny_storm",
+      "breakpoints": true
     }
   ]
 }

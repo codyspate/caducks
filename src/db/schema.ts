@@ -194,3 +194,28 @@ export const location_edits = sqliteTable("location_edit", {
   newContent: text("new_content").notNull(),
   editTimestamp: integer("edit_timestamp", { mode: "timestamp" }).notNull(),
 });
+
+export const journal_entries = sqliteTable("journal_entry", {
+  id: text("id").primaryKey(),
+  huntDate: integer("hunt_date", { mode: "timestamp" }).notNull(),
+  numHunters: integer("num_hunters").notNull(),
+  locationId: text("location_id")
+    .notNull()
+    .references(() => locations.id),
+  notes: text("notes"),
+  weather: text("weather"), // JSON string with weather data
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+});
+
+export const journal_harvests = sqliteTable("journal_harvest", {
+  id: text("id").primaryKey(),
+  journalEntryId: text("journal_entry_id")
+    .notNull()
+    .references(() => journal_entries.id),
+  birdType: text("bird_type").notNull(), // e.g., "Mallard", "Canada Goose", etc.
+  count: integer("count").notNull(),
+});
